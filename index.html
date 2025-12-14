@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频内容分析器</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 视频内容分析器</h1>
+        <p class="subtitle">浏览器端完全本地识别 MP4 视频内容</p>
+        
+        <div class="upload-section">
+            <input type="file" id="videoFile" accept="video/mp4" />
+            <button id="analyzeBtn" disabled>开始分析</button>
+        </div>
+
+        <div id="videoPreview" class="video-preview hidden">
+            <video id="videoPlayer" controls></video>
+        </div>
+
+        <div id="progress" class="progress hidden">
+            <div class="progress-bar">
+                <div id="progressBar" class="progress-fill"></div>
+            </div>
+            <p id="progressText">准备中...</p>
+        </div>
+
+        <div id="results" class="results hidden">
+            <h2>分析结果</h2>
+            
+            <div class="result-section">
+                <h3>📝 音频转录</h3>
+                <div id="transcription" class="result-content">
+                    <p class="loading">正在转录音频...</p>
+                </div>
+            </div>
+
+            <div class="result-section">
+                <h3>🖼️ 关键帧分析</h3>
+                <div id="frames" class="frames-grid"></div>
+            </div>
+
+            <div class="result-section">
+                <h3>📊 完整数据 (JSON)</h3>
+                <button id="copyJson">复制 JSON</button>
+                <button id="downloadJson">下载 JSON</button>
+                <pre id="jsonOutput"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/main.js"></script>
+</body>
+</html>
