@@ -1,5 +1,4 @@
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
-import '@tensorflow/tfjs';
 import { createWorker } from 'tesseract.js';
 
 export class FrameAnalyzer {
@@ -10,6 +9,11 @@ export class FrameAnalyzer {
 
     async init(progressCallback) {
         try {
+            // 等待 TensorFlow.js 准备就绪
+            progressCallback?.(25, '初始化 TensorFlow...');
+            await window.tf.ready();
+            progressCallback?.(28, 'TensorFlow 准备完成');
+            
             // 加载 COCO-SSD 物体检测模型
             progressCallback?.(30, '正在加载物体识别模型...');
             this.objectDetector = await cocoSsd.load();

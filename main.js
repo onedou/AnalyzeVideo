@@ -22,9 +22,13 @@ let analysisResult = null;
 // 视频文件选择
 videoFileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
+    console.log('文件选择:', file);
+    console.log('文件类型:', file ? file.type : 'null');
+    
     if (file && file.type === 'video/mp4') {
         currentVideoFile = file;
         analyzeBtn.disabled = false;
+        console.log('按钮已启用, disabled =', analyzeBtn.disabled);
         
         // 预览视频
         const url = URL.createObjectURL(file);
@@ -34,44 +38,12 @@ videoFileInput.addEventListener('change', (e) => {
         // 隐藏之前的结果
         resultsDiv.classList.add('hidden');
         progressDiv.classList.add('hidden');
+    } else {
+        console.log('文件类型不匹配或没有文件');
     }
 });
 
 // 开始分析
-analyzeBtn.addEventListener('analyze', async () => {
-    if (!currentVideoFile) return;
-    
-    analyzeBtn.disabled = true;
-    progressDiv.classList.remove('hidden');
-    resultsDiv.classList.remove('hidden');
-    
-    // 初始化分析器
-    if (!analyzer) {
-        analyzer = new VideoAnalyzer();
-        await analyzer.init((progress, message) => {
-            updateProgress(progress, message);
-        });
-    }
-    
-    try {
-        // 执行分析
-        analysisResult = await analyzer.analyze(currentVideoFile, (progress, message) => {
-            updateProgress(progress, message);
-        });
-        
-        // 显示结果
-        displayResults(analysisResult);
-        updateProgress(100, '分析完成！');
-        
-    } catch (error) {
-        console.error('分析失败:', error);
-        alert('分析失败: ' + error.message);
-    } finally {
-        analyzeBtn.disabled = false;
-    }
-});
-
-// 监听按钮点击而不是 'analyze' 事件
 analyzeBtn.addEventListener('click', async () => {
     if (!currentVideoFile) return;
     

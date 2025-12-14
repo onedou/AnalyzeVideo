@@ -1,9 +1,9 @@
-import { AudioTranscriber } from './audioTranscriber.js';
+// import { AudioTranscriber } from './audioTranscriber.js';
 import { FrameAnalyzer } from './frameAnalyzer.js';
 
 export class VideoAnalyzer {
     constructor() {
-        this.audioTranscriber = new AudioTranscriber();
+        // this.audioTranscriber = new AudioTranscriber();
         this.frameAnalyzer = new FrameAnalyzer();
         this.initialized = false;
     }
@@ -45,18 +45,12 @@ export class VideoAnalyzer {
             result.keyframes = await this.frameAnalyzer.analyzeKeyframes(frames, progressCallback);
             progressCallback?.(95, '关键帧分析完成');
 
-            // 3. 音频转录（可选，如果失败不影响整体结果）
-            try {
-                progressCallback?.(30, '正在转录音频...');
-                result.transcription = await this.audioTranscriber.transcribe(videoFile, progressCallback);
-            } catch (error) {
-                console.warn('音频转录失败，但继续处理:', error);
-                result.transcription = {
-                    text: '',
-                    duration: 0,
-                    error: '音频转录失败: ' + error.message
-                };
-            }
+            // 3. 音频转录（暂时禁用）
+            progressCallback?.(96, '跳过音频转录...');
+            result.transcription = {
+                text: '音频转录功能暂时禁用',
+                duration: 0
+            };
 
             progressCallback?.(100, '分析完成！');
             return result;
