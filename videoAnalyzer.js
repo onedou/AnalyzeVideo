@@ -1,9 +1,9 @@
-// import { AudioTranscriber } from './audioTranscriber.js';
+import { AudioTranscriber } from './audioTranscriber.js';
 import { FrameAnalyzer } from './frameAnalyzer.js';
 
 export class VideoAnalyzer {
     constructor() {
-        // this.audioTranscriber = new AudioTranscriber();
+        this.audioTranscriber = new AudioTranscriber();
         this.frameAnalyzer = new FrameAnalyzer();
         this.initialized = false;
     }
@@ -43,14 +43,11 @@ export class VideoAnalyzer {
 
             // 2. 分析关键帧（物体检测 + OCR）
             result.keyframes = await this.frameAnalyzer.analyzeKeyframes(frames, progressCallback);
-            progressCallback?.(95, '关键帧分析完成');
+            progressCallback?.(80, '关键帧分析完成');
 
-            // 3. 音频转录（暂时禁用）
-            progressCallback?.(96, '跳过音频转录...');
-            result.transcription = {
-                text: '音频转录功能暂时禁用',
-                duration: 0
-            };
+            // 3. 音频转录
+            progressCallback?.(85, '开始音频转录...');
+            result.transcription = await this.audioTranscriber.transcribe(videoFile, progressCallback);
 
             progressCallback?.(100, '分析完成！');
             return result;

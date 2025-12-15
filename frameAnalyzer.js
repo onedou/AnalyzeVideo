@@ -1,3 +1,4 @@
+import * as tf from '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import { createWorker } from 'tesseract.js';
 
@@ -11,32 +12,64 @@ export class FrameAnalyzer {
         try {
             // 等待 TensorFlow.js 准备就绪
             progressCallback?.(25, '初始化 TensorFlow...');
-            await window.tf.ready();
+            console.log('开始初始化 TensorFlow...');
+            await tf.ready();
+            console.log('TensorFlow 准备完成');
             progressCallback?.(28, 'TensorFlow 准备完成');
             
             // 加载 COCO-SSD 物体检测模型
             progressCallback?.(30, '正在加载物体识别模型...');
-            this.objectDetector = await cocoSsd.load();
-            progressCallback?.(40, '物体识别模型加载完成');
+            console.log('开始加载 COCO-SSD 模型...');
+            
+            try {
+                // 添加超时保护 - 60秒超时
+                const loadModel = cocoSsd.load({
+                    base: 'lite_mobilenet_v2' // 使用更轻量的模型
+                });
+                const timeout = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('模型加载超时（60秒）')), 60000)
+                );
+                
+                this.objectDetector = await Promise.race([loadModel, timeout]);
+                console.log('COCO-SSD 模型加载完成');
+                progressCallback?.(40, '物体识别模型加载完成');
+            } catch (modelError) {
+                console.warn('物体识别模型加载失败，跳过此功能:', modelError);
+                progressCallback?.(40, '物体识别模型加载失败（跳过）');
+                this.objectDetector = null;
+            }
 
             // 初始化 OCR
             progressCallback?.(45, '正在初始化文字识别...');
-            this.ocrWorker = await createWorker('chi_sim+eng', 1, {
-                logger: (m) => {
-                    if (m.status === 'loading tesseract core') {
-                        progressCallback?.(45, 'OCR: 加载核心模块...');
-                    } else if (m.status === 'initializing tesseract') {
-                        progressCallback?.(48, 'OCR: 初始化中...');
-                    } else if (m.status === 'loading language traineddata') {
-                        progressCallback?.(50, 'OCR: 加载语言包...');
+            console.log('开始初始化 OCR...');
+            try {
+                this.ocrWorker = await createWorker('chi_sim+eng', 1, {
+                    workerPath: '/tesseract/worker.min.js',
+                    langPath: '/tesseract',
+                    corePath: '/tesseract',
+                    logger: (m) => {
+                        console.log('OCR:', m.status, m.progress);
+                        if (m.status === 'loading tesseract core') {
+                            progressCallback?.(45, 'OCR: 加载核心模块...');
+                        } else if (m.status === 'initializing tesseract') {
+                            progressCallback?.(48, 'OCR: 初始化中...');
+                        } else if (m.status === 'loading language traineddata') {
+                            progressCallback?.(50, 'OCR: 加载语言包...');
+                        }
                     }
-                }
-            });
-            progressCallback?.(55, '文字识别初始化完成');
+                });
+                console.log('OCR 初始化完成');
+                progressCallback?.(55, '文字识别初始化完成');
+            } catch (ocrError) {
+                console.warn('OCR 初始化失败，跳过此功能:', ocrError);
+                progressCallback?.(55, 'OCR 初始化失败（跳过）');
+                this.ocrWorker = null;
+            }
             
             return true;
         } catch (error) {
             console.error('帧分析器初始化失败:', error);
+            progressCallback?.(55, '初始化失败: ' + error.message);
             return false;
         }
     }
@@ -107,6 +140,7 @@ export class FrameAnalyzer {
         try {
             // 物体检测
             if (this.objectDetector) {
+                console.log('开始物体检测，时间戳:', frame.timestamp);
                 // 从 canvas 获取图像进行检测
                 const img = new Image();
                 await new Promise((resolve, reject) => {
@@ -116,21 +150,31 @@ export class FrameAnalyzer {
                 });
                 
                 const predictions = await this.objectDetector.detect(img);
+                console.log('检测到', predictions.length, '个物体');
                 result.objects = predictions.map(p => ({
                     class: p.class,
                     score: p.score,
                     bbox: p.bbox
                 }));
+            } else {
+                console.log('物体检测器未加载，跳过');
+                result.objects = [];
             }
 
             // OCR 文字识别
             if (this.ocrWorker) {
+                console.log('开始 OCR 识别');
                 try {
                     const { data: { text } } = await this.ocrWorker.recognize(frame.imageUrl);
                     result.text = text.trim();
+                    console.log('OCR 识别完成');
                 } catch (ocrError) {
                     console.warn('OCR识别失败:', ocrError);
+                    result.text = '';
                 }
+            } else {
+                console.log('OCR 工作器未加载，跳过');
+                result.text = '';
             }
 
         } catch (error) {

@@ -6,9 +6,16 @@ export default defineConfig({
     headers: {
       'Cross-Origin-Embedder-Policy': 'require-corp',
       'Cross-Origin-Opener-Policy': 'same-origin',
+    },
+    fs: {
+      strict: false
     }
   },
   optimizeDeps: {
-    exclude: ['@xenova/transformers']
+    exclude: ['@xenova/transformers', 'onnxruntime-web']
+  },
+  assetsInclude: ['**/*.wasm', '**/*.mjs'],
+  build: {
+    target: 'esnext'
   }
 });
