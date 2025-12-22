@@ -1,8 +1,10 @@
 import { VideoAnalyzer } from './videoAnalyzer.js';
+import { AudioExtractor } from './audioExtractor.js';
 
 // DOM元素
 const videoFileInput = document.getElementById('videoFile');
 const analyzeBtn = document.getElementById('analyzeBtn');
+const exportAudioBtn = document.getElementById('exportAudioBtn');
 const videoPreview = document.getElementById('videoPreview');
 const videoPlayer = document.getElementById('videoPlayer');
 const progressDiv = document.getElementById('progress');
@@ -16,6 +18,7 @@ const copyJsonBtn = document.getElementById('copyJson');
 const downloadJsonBtn = document.getElementById('downloadJson');
 
 let analyzer = null;
+let audioExtractor = null;
 let currentVideoFile = null;
 let analysisResult = null;
 
@@ -28,6 +31,7 @@ videoFileInput.addEventListener('change', (e) => {
     if (file && file.type === 'video/mp4') {
         currentVideoFile = file;
         analyzeBtn.disabled = false;
+        exportAudioBtn.disabled = false;
         console.log('按钮已启用, disabled =', analyzeBtn.disabled);
         
         // 预览视频
@@ -146,4 +150,43 @@ downloadJsonBtn.addEventListener('click', () => {
     a.download = `video-analysis-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
+});
+
+// 导出音频为MP3
+exportAudioBtn.addEventListener('click', async () => {
+    if (!currentVideoFile) return;
+    
+    exportAudioBtn.disabled = true;
+    progressDiv.classList.remove('hidden');
+    
+    try {
+        // 初始化音频提取器
+        if (!audioExtractor) {
+            audioExtractor = new AudioExtractor();
+        }
+        
+        // 提取音频
+        updateProgress(0, '开始提取音频...');
+        const audioBlob = await audioExtractor.extractAudioAsMP3(currentVideoFile, (progress, message) => {
+            updateProgress(progress, message);
+        });
+        
+        // 下载音频文件
+        const filename = currentVideoFile.name.replace(/\.[^/.]+$/, '') + '-audio';
+        audioExtractor.downloadAudio(audioBlob, filename);
+        
+        updateProgress(100, '音频导出成功！');
+        
+        // 3秒后隐藏进度条
+        setTimeout(() => {
+            progressDiv.classList.add('hidden');
+        }, 3000);
+        
+    } catch (error) {
+        console.error('音频导出失败:', error);
+        alert('音频导出失败: ' + error.message);
+        progressDiv.classList.add('hidden');
+    } finally {
+        exportAudioBtn.disabled = false;
+    }
 });

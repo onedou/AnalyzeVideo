@@ -62,6 +62,16 @@ button {
     transition: all 0.3s;
 }
 
+#exportAudioBtn {
+    background: #28a745;
+}
+
+#exportAudioBtn:hover:not(:disabled) {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+}
+
 button:hover:not(:disabled) {
     background: #5568d3;
     transform: translateY(-2px);

@@ -12,10 +12,21 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    exclude: ['@xenova/transformers', 'onnxruntime-web']
+    exclude: ['@xenova/transformers', 'onnxruntime-web', '@ffmpeg/ffmpeg', '@ffmpeg/util'],
+    esbuildOptions: {
+      target: 'esnext'
+    }
+  },
+  worker: {
+    format: 'es'
   },
   assetsInclude: ['**/*.wasm', '**/*.mjs'],
   build: {
-    target: 'esnext'
+    target: 'esnext',
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
   }
 });
